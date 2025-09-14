@@ -31,21 +31,16 @@ def search_node(grafo, tipo, root_node, target_node):
     if tipo not in ['bfs', 'dfs']:
         raise Exception(f"tipo no valido: {tipo}, se espera bfs o dfs")
 
-    graph_len = len(grafo)
     current_node = root_node
     stack = [root_node] # cola de lectura
     solve_it = False # indica si ya hemos encontrado la solucion
-
     readit = {}
+    node_colors = []
     for k,_ in grafo.items():
         readit[k] = False
 
-    #graficos
-    G = nx.Graph()  # creamos el lienzo
-
     # almacenamos los colores de los nodos
     # en este caso cada posicion del arreglo representa un nodo
-    node_colors = ['lightgreen'] * graph_len
 
     if root_node == target_node:
         solve_it = True
@@ -53,51 +48,86 @@ def search_node(grafo, tipo, root_node, target_node):
 
     readit[root_node] = True # el nodo raiz ha sido leido
 
-    positions = {
-        current_node: (0, 0)  # nodo raiz
-    }
-
-    row  = 0
-    col = 1
 
     while len(stack) > 0:
         if tipo == 'dfs':
             # se saca y quita el ultimo nodo
             current_node = stack.pop()
-            row -= 1
-            if len(stack) == 0: # salto de rama
-                row = 1
-
         elif tipo == 'bfs':
             # se saca y qutia el primer nodo
-            current_node = stack[0]
-            stack = stack[1:]
+            current_node = stack.pop(0)
 
         # preguntamos si el solucion
         if not solve_it and current_node == target_node:
             solve_it = True
-            node_colors[current_node] = 'blue'
-
-        if current_node != root_node:
-            positions[current_node] = (col, row)
-
+            node_colors.append('lightblue')
+        else:
+            node_colors.append('lightgray')
 
         for node in grafo[current_node]:
             if readit[node]: continue # nodo leido, saltamos
             stack.append(node)
             readit[node] = True #  indicamos que el nodo ha sido leido
+    # converitmos el mapa en una lista
+    print(node_colors)
+    return node_colors
 
 
+def calculate_positions(grafo: dict, root: int):
+    stack = [root]
+    visited = {}
+    for k,_ in grafo.items():
+        visited[k] = False
+    level = 0
 
-    print(positions)
+    pos = {}
 
 
+    while len(stack) > 0:
+        no_levels = len(stack)
+        # dependiendo su longitud se centra o no el nodo
+        x_start = -(no_levels - 1) // 2
+        # recorremos los nodos relacionados
+        for i in range (no_levels):
+            node = stack.pop(0) # usamos bfs para ir por niveles
+            y = -level
+            x = x_start + i
+            pos[node] = (x, y)
+            # indicamos que visitamos los nodos
+            for child in grafo[node]:
+                if visited[child]: continue
+                visited[child] = True
+                stack.append(child)
+        level += 1
 
+    pos[root] = (0,0)
+    return pos
+
+
+def render_graph(graph: dict, colors: list, pos: dict):
+    G = nx.Graph()
+    for node, children in graph.items():
+        for child in children:
+            G.add_edge(node, child)
+
+    nx.spring_layout(G)
+    nx.draw(
+        G,
+        pos=pos,
+        with_labels=True,
+        font_weight='bold',
+        node_color=colors,
+        node_size=200,
+        font_size=10,
+    )
+    plt.show()
 
 
 def main():
     grafo = graph_from_file(path)
-    search_node(grafo, 'dfs', 1, 5)
+    colors = search_node(grafo, 'dfs', 1, 5)
+    pos = calculate_positions(grafo, 1)
+    render_graph(grafo, colors, pos)
 
 
 
