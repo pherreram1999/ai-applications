@@ -35,9 +35,16 @@ def search_node(grafo, tipo, root_node, target_node):
     stack = [root_node] # cola de lectura
     solve_it = False # indica si ya hemos encontrado la solucion
     readit = {}
-    node_colors = []
+    node_colors = ['lightgray'] * len(grafo)
     for k,_ in grafo.items():
         readit[k] = False
+
+    index_map = {}
+
+    index = 0
+    for k,_ in grafo.items():
+        index_map[k] = index
+        index += 1
 
     # almacenamos los colores de los nodos
     # en este caso cada posicion del arreglo representa un nodo
@@ -57,12 +64,14 @@ def search_node(grafo, tipo, root_node, target_node):
             # se saca y qutia el primer nodo
             current_node = stack.pop(0)
 
+        print(f'node: {current_node}')
+
         # preguntamos si el solucion
         if not solve_it and current_node == target_node:
             solve_it = True
-            node_colors.append('lightblue')
-        else:
-            node_colors.append('lightgray')
+            node_colors[index_map[current_node]] = 'lightblue'
+        elif not solve_it:
+            node_colors[index_map[current_node]] = 'lightgreen'
 
         for node in grafo[current_node]:
             if readit[node]: continue # nodo leido, saltamos
@@ -86,7 +95,7 @@ def calculate_positions(grafo: dict, root: int):
     while len(stack) > 0:
         no_levels = len(stack)
         # dependiendo su longitud se centra o no el nodo
-        x_start = -(no_levels - 1) // 2
+        x_start = -(no_levels - 1) / 2
         # recorremos los nodos relacionados
         for i in range (no_levels):
             node = stack.pop(0) # usamos bfs para ir por niveles
@@ -125,7 +134,7 @@ def render_graph(graph: dict, colors: list, pos: dict):
 
 def main():
     grafo = graph_from_file(path)
-    colors = search_node(grafo, 'dfs', 1, 5)
+    colors = search_node(grafo, 'dfs', 1, 6)
     pos = calculate_positions(grafo, 1)
     render_graph(grafo, colors, pos)
 
