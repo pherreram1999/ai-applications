@@ -2,9 +2,7 @@ import sys
 import networkx as nx # trabajar nodos y aristas
 import matplotlib.pyplot as plt # plt
 
-path = sys.argv[1]
 
-print(path)
 
 
 COLOR_COMMON = 'lightgray'
@@ -82,7 +80,6 @@ def search_node(grafo, tipo, root_node, target_node):
             stack.append(node)
             readit[node] = True #  indicamos que el nodo ha sido leido
     # converitmos el mapa en una lista
-    print(node_colors)
     return node_colors
 
 
@@ -110,14 +107,14 @@ def calculate_positions(grafo: dict, root: int):
         # para que si empieza en 1 -1 = 0 / 2 = 0
         # 2 - 1 = 1 / 2 = .5 = -5
         x_start = -(no_levels - 1) / 2
-        print(f'x_start: {x_start} - no_level: {no_levels} - level: {level}')
+        #print(f'x_start: {x_start} - no_level: {no_levels} - level: {level}')
         # recorremos los nodos relacionados
         for i in range (no_levels):
             node = stack.pop(0) # usamos bfs para ir por niveles
             y = -level
             x = x_start + i # va recoriendo de derecha a izquierda
             pos[node] = (x, y)
-            print(f'node: {node} pos: {pos[node]}')
+            #print(f'node: {node} pos: {pos[node]}')
             # indicamos que visitamos los nodos
             for child in grafo[node]:
                 if visited[child]: continue
@@ -130,7 +127,7 @@ def calculate_positions(grafo: dict, root: int):
     return pos
 
 
-def render_graph(graph: dict, colors: list, pos: dict):
+def render_graph(graph: dict, target: int,colors: list, pos: dict):
     G = nx.Graph()
     for node, children in graph.items():
         for child in children:
@@ -146,14 +143,31 @@ def render_graph(graph: dict, colors: list, pos: dict):
         node_size=200,
         font_size=10,
     )
+    # con la posiciones del nodo calculadas, solo agarramos la del target,
+    label_x,label_y = pos[target]
+    # creamos un nuevo layout para dibjar la etiqueta
+    nx.draw_networkx_labels(
+        G,
+        pos={target: (label_x + .2, label_y)},
+        labels= {
+            target: "solucion!"
+        },
+        font_size=10,
+        font_weight='bold',
+        font_color='black',
+    )
     plt.show()
 
 
 def main():
+    path = sys.argv[1]
+    target = 2
+    root = 1
+
     grafo = graph_from_file(path)
-    colors = search_node(grafo, 'dfs', 2, 2)
-    pos = calculate_positions(grafo, 2)
-    render_graph(grafo, colors, pos)
+    colors = search_node(grafo, 'dfs', root, target)
+    pos = calculate_positions(grafo, root)
+    render_graph(grafo, target,colors, pos)
 
 
 
