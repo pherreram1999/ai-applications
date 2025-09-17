@@ -66,7 +66,7 @@ def search_node(grafo, tipo, root_node, target_node):
             # se saca y qutia el primer nodo
             current_node = stack.pop(0)
 
-        print(f'node: {current_node}')
+        #print(f'node: {current_node}')
 
         # preguntamos si el solucion
         if not solve_it and current_node == target_node:
@@ -140,7 +140,7 @@ def render_graph(graph: dict, target: int,colors: list, pos: dict):
         with_labels=True,
         font_weight='bold',
         node_color=colors,
-        node_size=200,
+        node_size=800,
         font_size=10,
     )
     # con la posiciones del nodo calculadas, solo agarramos la del target,
@@ -148,7 +148,7 @@ def render_graph(graph: dict, target: int,colors: list, pos: dict):
     # creamos un nuevo layout para dibjar la etiqueta
     nx.draw_networkx_labels(
         G,
-        pos={target: (label_x + .2, label_y)},
+        pos={target: (label_x + .4, label_y)},
         labels= {
             target: "solucion!"
         },
@@ -160,8 +160,10 @@ def render_graph(graph: dict, target: int,colors: list, pos: dict):
 
 
 def main():
-    path = sys.argv[1]
-    target = 2
+    path, target = sys.argv[1:3]
+
+    target = int(target)
+
     root = 1
 
     grafo = graph_from_file(path)
