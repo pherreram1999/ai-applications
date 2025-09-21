@@ -1,3 +1,4 @@
+#!python
 import sys
 import networkx as nx # trabajar nodos y aristas
 import matplotlib.pyplot as plt # plt
@@ -148,7 +149,7 @@ def render_graph(graph: dict, target: int,colors: list, pos: dict):
     # creamos un nuevo layout para dibjar la etiqueta
     nx.draw_networkx_labels(
         G,
-        pos={target: (label_x + .4, label_y)},
+        pos={target: (label_x + .2, label_y + -.2)},
         labels= {
             target: "solucion!"
         },
@@ -160,14 +161,27 @@ def render_graph(graph: dict, target: int,colors: list, pos: dict):
 
 
 def main():
-    path, target = sys.argv[1:3]
+
+    if len(sys.argv) < 4:
+        print("debe proporcionar [tipo_algoritmo] [grafo_path] [target] [root?]")
+        exit(1)
+
+    tipo , path, target = sys.argv[1:4] # recordar que no toma el ultimo indice
 
     target = int(target)
 
-    root = 1
 
     grafo = graph_from_file(path)
-    colors = search_node(grafo, 'dfs', root, target)
+    root = None
+
+    if len(sys.argv) == 5: # asignamos el root pasado
+        root = int(sys.argv[4])
+    else: # tomamos el primer nodo
+        first_key = next(iter(grafo))
+        root = first_key
+
+
+    colors = search_node(grafo, tipo, root, target)
     pos = calculate_positions(grafo, root)
     render_graph(grafo, target,colors, pos)
 
