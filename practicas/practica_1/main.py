@@ -3,9 +3,6 @@ import sys
 import networkx as nx # trabajar nodos y aristas
 import matplotlib.pyplot as plt # plt
 
-
-
-
 COLOR_COMMON = 'lightgray'
 COLOR_TARGET = 'lightgreen'
 COLOR_WAY = 'lightblue'
