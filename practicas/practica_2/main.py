@@ -1,5 +1,11 @@
+import time
 import numpy as np
 import matplotlib.pyplot as plt
+import tracemalloc
+
+TRANSITABLE = 0
+PARED = 1
+DELAY = 0.020
 
 mapa = np.array([
 [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
@@ -55,17 +61,161 @@ mapa = np.array([
 [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
 ])
 
+punto_inicial = (1,1)
+meta = (49,49)
 
-def render_map(mapa):
-    plt.figure()
-    plt.imshow(mapa,cmap='binary')
-    plt.title('Map')
-    plt.show()
+moves = [(0,1),(1,0),(0,-1),(-1,0)]
+
+
+
+
+class Nodo:
+
+    def __init__(self, x, y, camino=None):
+        if camino is None:
+            camino = []
+        self.x = x
+        self.y = y
+
+        # camino arrastra la ruta del nodo que ha tomado haciendo copia de los caminos anteriores
+        # alternativa mente pudimos implementar un padre para reconstruir el camino
+        # llendo desde el ultimo nodo hasta al primero  atraves de sus padres e invertiendo la lista
+        self.camino = camino
+
+class Metrics:
+
+    def __init__(self):
+        self.time = 0
+        self.memory_pico = 0
+        self.current_memory = 0
+
+    def __str__(self):
+        return (f'tiempo: {self.time:.4f}s \n memoria pico: {self.memory_pico / 1024 / 1024:.2f} MB,'  +
+                f' memoria actual: {self.current_memory / 1024 / 1024:.2f} MB')
+
+def search_in_map(mapa,tipo,punto_inicial,meta):
+    if tipo not in ['bfs','dfs']:
+        raise Exception(f'Tipo de {tipo} no reconocido')
+    # meta es transitable?
+    if mapa[meta[0],meta[1]] == PARED or mapa[punto_inicial[0],punto_inicial[1]] == PARED:
+        raise Exception('Meta o punto inicial no es objetivo transitable')
+
+    filas, columnas = np.shape(mapa)
+
+
+    stack = [Nodo(punto_inicial[0],punto_inicial[1])]
+    visitados = np.zeros((filas,columnas))
+
+    considerados = []
+
+
+    while len(stack) > 0:
+        current_node = None
+        if tipo == 'dfs':
+            current_node = stack.pop()
+        elif tipo == 'bfs':
+            current_node = stack.pop(0)
+
+
+        considerados += [current_node]
+
+        # es solucion ?
+
+        if current_node.x == meta[0] and current_node.y == meta[1]:
+            # el camino para llegar es camino que viene arrastrado mas el camino anterior
+            return current_node.camino + [current_node], considerados
+
+        # indicamos que gemos visitado este nodo
+
+        visitados[current_node.x,current_node.y] = 1
+
+        for mx,my in moves:
+            hijo = Nodo(current_node.x + mx, current_node.y + my)
+
+            # evaluamos que dentro del mapa
+            # que sea transitable el hijo
+            # que no este visitado
+
+            if (visitados[hijo.x,hijo.y] == 0
+                    and (0 <= hijo.x < filas)
+                    and (0 <= hijo.y < columnas)
+                    and mapa[hijo.x,hijo.y] == TRANSITABLE):
+                # guardamos el camino valido de este nodo actual
+                # guardamos el camino para llegar el nodo hijo, es es el camino del padre, mas el mismo padre
+                hijo.camino = current_node.camino + [current_node]
+                stack.append(hijo)
+
+                pass
+    return None,considerados # no se hallo una solucion
+
+def render_map(fig,title,mapa,camino,considerados):
+    fig.imshow(mapa, cmap='binary')
+    fig.set_title(title)
+
+    if considerados:
+        for i in considerados:
+            fig.plot(i.y, i.x, 'o',color='blue')
+            plt.pause(DELAY)
+    if camino:
+        for i in camino:
+            fig.plot(i.y, i.x, 'o',color='red')
+            plt.pause(DELAY)
     pass
 
 
+def trace(callback,*args):
+    # ejecutamos y medimos lo datos de
+    metrics = Metrics()
+    tracemalloc.start()
+    start = time.time()
+
+    res = callback(*args)
+
+    end = time.time()
+    metrics.current_memory, metrics.memory_pico = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
+    metrics.time = end - start
+    return metrics,res
+
+
+
+
 def main():
-    render_map(mapa)
+    bfsMetrics, (caminoBFS, consideradosBFS) = trace(
+        search_in_map,
+        mapa,
+        'bfs',
+        punto_inicial,
+        meta,
+    )
+
+    dfsMetrics, (caminoDFS,consideradosDFS) = trace(
+        search_in_map,
+        mapa,
+        'dfs',
+        punto_inicial,
+        meta
+    )
+
+
+
+    _, (f1,f2) = plt.subplots(1,2,figsize=(12,7))
+
+    render_map(
+        f1,
+        f'DFS:\n {dfsMetrics}',
+        mapa,
+        caminoDFS,
+        consideradosDFS)
+
+    render_map(
+        f2,
+        f'BFS:\n {bfsMetrics}',
+        mapa,
+        caminoBFS,
+        consideradosBFS)
+
+    plt.show()
     pass
 
 if __name__ == '__main__':
