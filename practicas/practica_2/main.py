@@ -2,10 +2,19 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 import tracemalloc
+import random
 
 TRANSITABLE = 0
 PARED = 1
-DELAY = 0.020
+DELAY = 0.0010
+
+COLOR_WAY = 'red'
+COLOR_VISITED = 'blue'
+
+COLOR_START = 'green'
+COLOR_GOAL = 'pink'
+
+SHAPE_WAY = 'o'
 
 mapa = np.array([
 [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
@@ -60,9 +69,6 @@ mapa = np.array([
 [1,0,1,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,1,0,0,0,0,0,1,0,1,0,0,0,1,0,0,0,1,0,0,0,0,0,1],
 [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
 ])
-
-punto_inicial = (1,1)
-meta = (49,49)
 
 moves = [(0,1),(1,0),(0,-1),(-1,0)]
 
@@ -148,18 +154,25 @@ def search_in_map(mapa,tipo,punto_inicial,meta):
                 pass
     return None,considerados # no se hallo una solucion
 
-def render_map(fig,title,mapa,camino,considerados):
+def render_map(fig,title,mapa,camino,considerados,punto_inicial, meta):
     fig.imshow(mapa, cmap='binary')
     fig.set_title(title)
 
+    fig.plot(punto_inicial[1], punto_inicial[0], SHAPE_WAY, color=COLOR_START)
+    fig.plot(meta[1], meta[0], SHAPE_WAY, color=COLOR_GOAL)
+
     if considerados:
         for i in considerados:
-            fig.plot(i.y, i.x, 'o',color='blue')
+            fig.plot(i.y, i.x, SHAPE_WAY,color=COLOR_VISITED)
             plt.pause(DELAY)
     if camino:
         for i in camino:
-            fig.plot(i.y, i.x, 'o',color='red')
+            fig.plot(i.y, i.x, SHAPE_WAY,color=COLOR_WAY)
             plt.pause(DELAY)
+
+
+
+
     pass
 
 
@@ -178,9 +191,21 @@ def trace(callback,*args):
     return metrics,res
 
 
+def get_random_position(mapa)-> tuple:
+    f,c = np.shape(mapa)
+    x = random.randint(0, f - 1) # se resta 1 para evitar valores no indexados
+    y = random.randint(0, c - 1)
+    if mapa[x, y] == PARED:
+        return get_random_position(mapa)
+    return x,y
 
 
 def main():
+
+    # generamos un punto inicial y un punto final random
+    punto_inicial = get_random_position(mapa)
+    meta = get_random_position(mapa)
+
     bfsMetrics, (caminoBFS, consideradosBFS) = trace(
         search_in_map,
         mapa,
@@ -206,14 +231,20 @@ def main():
         f'DFS:\n {dfsMetrics}',
         mapa,
         caminoDFS,
-        consideradosDFS)
+        consideradosDFS,
+        punto_inicial,
+        meta
+    )
 
     render_map(
         f2,
         f'BFS:\n {bfsMetrics}',
         mapa,
         caminoBFS,
-        consideradosBFS)
+        consideradosBFS,
+        punto_inicial,
+        meta
+    )
 
     plt.show()
     pass
