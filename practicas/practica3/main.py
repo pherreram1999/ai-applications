@@ -3,18 +3,30 @@ from matriz import mapa
 from algoritmos import a_estrella, search_bfs_dfs
 from utils import punto_random
 from metrics import trace
-from constanst import ANIMATION_DELAY
+from constanst import ANIMATION_DELAY, START_COLOR, META_COLOR, COLOR_WAY, COLOR_MAP
 
-def render_maze(fig,mapa,camino, considerados):
+
+def render_maze(fig,mapa,camino, considerados,punto_inicial, meta):
     fig.imshow(mapa, cmap='binary')
+
+    # pintamos inicial
+    fig.plot(punto_inicial.y,punto_inicial.x,'^',color=START_COLOR)
+    fig.plot(meta.y,meta.x,'x',color=META_COLOR)
+
+    # no se considera el inicio el final para pintarlos
     if considerados:
-        for nodo in considerados:
+        for i in range(1,len(considerados) - 1):
+            nodo = considerados[i]
             plt.pause(ANIMATION_DELAY)
-            fig.plot(nodo.y, nodo.x, 'o',color='blue')
+            fig.plot(nodo.y, nodo.x, 'o',color=COLOR_MAP)
+
     if camino:
-        for nodo in camino:
+        for i in range(1, len(camino) - 1):
+            nodo = camino[i]
             plt.pause(ANIMATION_DELAY)
-            fig.plot(nodo.y, nodo.x, 'o',color='red')
+            fig.plot(nodo.y, nodo.x, 'o', color=COLOR_WAY)
+
+
 
     pass
 
@@ -67,9 +79,9 @@ def main():
     f3.set_title(f'A*\n {estrellaMetricas}')
 
 
-    render_maze(f1, mapa, camino_bfs, considerados_bfs)
-    render_maze(f2, mapa, camino_dfs, considerados_dfs)
-    render_maze(f3,mapa,camino_estrella,estrella_considerados)
+    render_maze(f1, mapa, camino_bfs, considerados_bfs,punto_inicial, meta)
+    render_maze(f2, mapa, camino_dfs, considerados_dfs,punto_inicial, meta)
+    render_maze(f3,mapa,camino_estrella,estrella_considerados,punto_inicial, meta)
     plt.show()
     pass
 
