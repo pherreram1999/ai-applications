@@ -1,14 +1,17 @@
+
 import numpy as np
 from models import Nodo
 from constanst import NO_TRANSITABLE, TRANSITABLE, G_CROSS, G_DIAGONAL
 
-movimientos = [(1,-1),(-1,-1),(-1,0),(1,0),(0,1),(1,1),(-1,1),(0,-1)]
+movimientos_estrella = [(1,-1),(-1,-1),(-1,0),(1,0),(0,1),(1,1),(-1,1),(0,-1)]
+
+movimientos_dfs_bfs = [(0,1),(1,0),(0,-1),(-1,0)]
 
 
 def heuristica(nodo: Nodo,meta: Nodo):
         return abs(nodo.x - meta.x) + abs(nodo.y - meta.y)
 
-def a_estrella(mapa,punto_inicial: Nodo, meta: Nodo) -> tuple[Nodo|None,list[Nodo]]:
+def a_estrella(mapa,punto_inicial: Nodo, meta: Nodo) -> tuple[Nodo,list[Nodo]]:
 
     if mapa[punto_inicial.x,punto_inicial.y] == NO_TRANSITABLE:
         raise Exception('punto inicial no transitable')
@@ -53,7 +56,7 @@ def a_estrella(mapa,punto_inicial: Nodo, meta: Nodo) -> tuple[Nodo|None,list[Nod
 
         # verificamos los vecimos en base a los movimientos
 
-        for vx,vy in movimientos:
+        for vx,vy in movimientos_estrella:
             vecino = Nodo(x=nodo_actual.x + vx,y=nodo_actual.y + vy)
             # corroboramos si el vecino esta entre dentro de mapa y este sea valido
             if (0 <= vecino.x < filas  # que sea dentro de las filas
@@ -89,9 +92,10 @@ def a_estrella(mapa,punto_inicial: Nodo, meta: Nodo) -> tuple[Nodo|None,list[Nod
                     lista_abierta.append(vecino)
     return None, considerados
 
-def search_bfs_dfs(mapa,algoritmo: str,punto_inicial: Nodo, meta: Nodo) -> tuple[Nodo|None,list[Nodo]]:
+def search_bfs_dfs(mapa,algoritmo: str,punto_inicial: Nodo, meta: Nodo) -> tuple[Nodo,list[Nodo]]:
     if not algoritmo in ['dfs','bfs']:
         raise Exception('algoritmo no reconocida. debe ser dfs, bfs')
+
     filas, columnas = np.shape(mapa)
 
     stack = [punto_inicial]
@@ -108,20 +112,20 @@ def search_bfs_dfs(mapa,algoritmo: str,punto_inicial: Nodo, meta: Nodo) -> tuple
 
         considerados.append(nodo_actual)
 
+        visitados[nodo_actual.x,nodo_actual.y] = 1
+
         # es solucion ?
         if nodo_actual == meta:
             return nodo_actual, considerados
 
-        visitados[nodo_actual.x,nodo_actual.y] = 1
 
-        for vx, vy in movimientos:
+        for vx, vy in movimientos_dfs_bfs:
             vecino = Nodo(nodo_actual.x + vx,nodo_actual.y + vy)
 
-            if (mapa[vecino.x, vecino.y] == TRANSITABLE
-                    and 0 <= vecino.x < filas
-                    and 0 <= vecino.y < columnas
-                    and visitados[vecino.x,vecino.y] == 0):
+            if (0 <= vecino.x < filas) and (0 <= vecino.y < columnas) and mapa[vecino.x, vecino.y] == TRANSITABLE and visitados[vecino.x,vecino.y] == 0:
                 vecino.padre = nodo_actual
+                visitados[vecino.x, vecino.y] = 1
                 stack.append(vecino)
+
 
     return None, considerados

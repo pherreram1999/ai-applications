@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 from matriz import mapa
 from algoritmos import a_estrella, search_bfs_dfs
 from utils import punto_random
-from metrics import Metrics, trace
+from metrics import trace
 from constanst import ANIMATION_DELAY
 
 def render_maze(fig,mapa,camino, considerados):
@@ -16,11 +16,11 @@ def render_maze(fig,mapa,camino, considerados):
             plt.pause(ANIMATION_DELAY)
             fig.plot(nodo.y, nodo.x, 'o',color='red')
 
+    pass
+
 def main():
-    fig_main, (f1,f2,f3) = plt.subplots(1,3, figsize = (12,4))
     punto_inicial = punto_random(mapa)
     meta = punto_random(mapa)
-
     #bfs
 
     bfsMetricas, (ultimo_nodo_bfs,considerados_bfs) = trace(
@@ -33,9 +33,17 @@ def main():
 
     camino_bfs = ultimo_nodo_bfs.construir_camino()
 
-    f1.set_title(f'BFS: {bfsMetricas}')
-    render_maze(f1,mapa,camino_bfs,considerados_bfs)
+    # dfs
 
+    dfsMetricas, (ultimo_nodo_dfs, considerados_dfs) = trace(
+        search_bfs_dfs,
+        mapa,
+        'dfs',
+        punto_inicial,
+        meta
+    )
+
+    camino_dfs = ultimo_nodo_dfs.construir_camino()
 
 
     # estrella
@@ -46,9 +54,21 @@ def main():
         punto_inicial,
         meta
     )
-    f3.set_title(f'A*: {estrellaMetricas}')
 
     camino_estrella = ultimo_nodo_estrella.construir_camino()
+
+    # al final renderizamos
+
+    fig_main, (f1,f2,f3) = plt.subplots(1,3, figsize = (18,7))
+    fig_main.suptitle('Comparación entre BFS,DFS y A*\n\n')
+
+    f1.set_title(f'BFS\n {bfsMetricas}')
+    f2.set_title(f'DFS\n {dfsMetricas}')
+    f3.set_title(f'A*\n {estrellaMetricas}')
+
+
+    render_maze(f1, mapa, camino_bfs, considerados_bfs)
+    render_maze(f2, mapa, camino_dfs, considerados_dfs)
     render_maze(f3,mapa,camino_estrella,estrella_considerados)
     plt.show()
     pass

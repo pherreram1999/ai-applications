@@ -10,13 +10,13 @@ class Metrics:
         self.current_memory = 0
 
     def __str__(self):
-        return (f'tiempo: {self.time:.4f}s \n memoria pico: {self.memory_pico / 1024 / 1024:.2f} MB,' +
-                f' memoria actual: {self.current_memory / 1024 / 1024:.2f} MB')
+        return (f'tiempo: {self.time:.4f}s \n mem. pico: {self.memory_pico / 1024 / 1024:.2f} MB,' +
+                f' mem. actual: {self.current_memory / 1024 / 1024:.2f} MB')
 
     pass
 
 def trace(callback, *args) -> tuple[Metrics, tuple]:
-        # ejecutamos y medimos lo datos de
+    # ejecutamos y medimos lo datos de
     metrics = Metrics()
     tracemalloc.start()
     start = time.time()
