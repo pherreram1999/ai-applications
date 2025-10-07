@@ -64,7 +64,8 @@ def search_node(grafo, tipo, root_node, target_node):
             # se saca y qutia el primer nodo
             current_node = stack.pop(0)
 
-        #print(f'node: {current_node}')
+
+        print(f'node: {current_node} - color: {node_colors[index_map[current_node]]}')
 
         # preguntamos si el solucion
         if not solve_it and current_node == target_node:

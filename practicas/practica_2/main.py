@@ -6,13 +6,13 @@ import random
 
 TRANSITABLE = 0
 PARED = 1
-DELAY = 0.0010
+DELAY = 0.00010
 
 COLOR_WAY = 'red'
 COLOR_VISITED = 'blue'
 
 COLOR_START = 'green'
-COLOR_GOAL = 'pink'
+COLOR_GOAL = 'green'
 
 SHAPE_WAY = 'o'
 
@@ -170,6 +170,7 @@ def render_map(fig,title,mapa,camino,considerados,punto_inicial, meta):
             fig.plot(i.y, i.x, SHAPE_WAY,color=COLOR_WAY)
             plt.pause(DELAY)
 
+    fig.plot(meta[1], meta[0], SHAPE_WAY, color=COLOR_GOAL)
 
 
 
@@ -224,8 +225,10 @@ def main():
 
 
 
-    _, (f1,f2) = plt.subplots(1,2,figsize=(12,7))
+    fm, (f1,f2) = plt.subplots(1,2,figsize=(12,7))
 
+
+    fm.tick
     render_map(
         f1,
         f'DFS:\n {dfsMetrics}',

@@ -5,8 +5,6 @@ from constanst import NO_TRANSITABLE, TRANSITABLE, G_CROSS, G_DIAGONAL
 movimientos = [(1,-1),(-1,-1),(-1,0),(1,0),(0,1),(1,1),(-1,1),(0,-1)]
 
 
-
-
 def heuristica(nodo: Nodo,meta: Nodo):
         return abs(nodo.x - meta.x) + abs(nodo.y - meta.y)
 
@@ -91,18 +89,39 @@ def a_estrella(mapa,punto_inicial: Nodo, meta: Nodo) -> tuple[Nodo|None,list[Nod
                     lista_abierta.append(vecino)
     return None, considerados
 
+def search_bfs_dfs(mapa,algoritmo: str,punto_inicial: Nodo, meta: Nodo) -> tuple[Nodo|None,list[Nodo]]:
+    if not algoritmo in ['dfs','bfs']:
+        raise Exception('algoritmo no reconocida. debe ser dfs, bfs')
+    filas, columnas = np.shape(mapa)
 
+    stack = [punto_inicial]
+    visitados = np.zeros((filas,columnas))
 
-# def main():
-#     punto_inicial = Nodo(1,1)
-#     meta = Nodo(47,47)
-#
-#     punto_final, considerados = a_estrella(mapa,punto_inicial, meta)
-#     camino = punto_final.construir_camino()
-#
-#     render(mapa,camino,considerados)
-#     pass
-#
+    considerados = []
 
-if __name__ == '__main__':
-    main()
+    while len(stack) > 0:
+        nodo_actual = None
+        if algoritmo == 'dfs':
+            nodo_actual = stack.pop()
+        elif algoritmo == 'bfs':
+            nodo_actual = stack.pop(0)
+
+        considerados.append(nodo_actual)
+
+        # es solucion ?
+        if nodo_actual == meta:
+            return nodo_actual, considerados
+
+        visitados[nodo_actual.x,nodo_actual.y] = 1
+
+        for vx, vy in movimientos:
+            vecino = Nodo(nodo_actual.x + vx,nodo_actual.y + vy)
+
+            if (mapa[vecino.x, vecino.y] == TRANSITABLE
+                    and 0 <= vecino.x < filas
+                    and 0 <= vecino.y < columnas
+                    and visitados[vecino.x,vecino.y] == 0):
+                vecino.padre = nodo_actual
+                stack.append(vecino)
+
+    return None, considerados

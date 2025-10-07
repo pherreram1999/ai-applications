@@ -9,15 +9,20 @@ def render_maze(fig,mapa,camino, considerados):
     fig.imshow(mapa, cmap='binary')
     if considerados:
         for nodo in considerados:
+            plt.pause(ANIMATION_DELAY)
             fig.plot(nodo.y, nodo.x, 'o',color='blue')
     if camino:
         for nodo in camino:
+            plt.pause(ANIMATION_DELAY)
             fig.plot(nodo.y, nodo.x, 'o',color='red')
 
 def main():
     fig_main, (f1,f2,f3) = plt.subplots(1,3, figsize = (12,4))
     punto_inicial = punto_random(mapa)
     meta = punto_random(mapa)
+
+    #dfs
+
 
     # estrella
     ultimo_nodo_estrella, estrellaConsiderados = a_estrella(mapa,punto_inicial,meta)
