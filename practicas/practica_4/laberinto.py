@@ -65,10 +65,11 @@ counter = 0
 
 f,c = np.shape(mapa)
 
-while counter <= 50:
+while counter <= 80:
     y = random.randint(0,f -1)
     x = random.randint(0,c -1)
-    if mapa[x,y] == TRANSITABLE:
+    nodo = mapa[x,y]
+    if nodo == TRANSITABLE  and (nodo != AGUA and nodo != LODO):
         mapa[x,y] = random.choice(caminos) # no incluye al cuatro
         counter += 1
 
