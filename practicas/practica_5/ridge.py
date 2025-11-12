@@ -22,7 +22,7 @@ def leer_csv(nombre, caracteristicas, etiquetas):
         print(f".:Columna {e} no encontrada:.")
         sys.exit()
 
-    return X_csv[:,0], X_csv[:,1], X_csv[:,2], Y_csv[:,0]
+    return X_csv[0:119,0], X_csv[0:119,1], X_csv[0:119,2], Y_csv[0:119,0]   #El 80% de las muestras se usa para entrenar el modelo
 
 #FUNCIÓN DE NORMALIZACIÓN
 def normalizar(X1,X2,X3,Y, extremos):
@@ -209,7 +209,7 @@ def main():
     #PARÁMETROS
     lr = 0.3
     T = 1e-6
-    epsilon = 1e-12
+    epsilon = 1e-9
     epocas_max = 100000
     
     #CARACTERISTICAS
@@ -286,7 +286,7 @@ def main():
         print(f"Conversión esperada (Ym): {Ym:.4f}")
         print("-"*50)
         
-        intervalo_confianza = 0.5 #SIMPLE MARGEN DE ERROR, NO SE CALCULARON INTERVALOS DE CONFIANZA PARA LA REGRESIÓN
+        intervalo_confianza = 3.0 #SIMPLE MARGEN DE ERROR, NO SE CALCULARON INTERVALOS DE CONFIANZA PARA LA REGRESIÓN
         
         if abs(diferencia) <= intervalo_confianza:
             print("Estado: NORMAL")
