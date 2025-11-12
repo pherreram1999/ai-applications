@@ -3,6 +3,8 @@ import plotly.express as px
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+import argparse
+import sys
 
 #LECTURA CSV
 def leer_csv(nombre, caracteristicas, etiquetas):
@@ -15,10 +17,12 @@ def leer_csv(nombre, caracteristicas, etiquetas):
 
     except FileNotFoundError:
         print(".:Archivo no encontrado:.")
+        sys.exit()
     except KeyError as e:
         print(f".:Columna {e} no encontrada:.")
+        sys.exit()
 
-    return X_csv[0:15,0], X_csv[0:15,1], X_csv[0:15,2], Y_csv[0:15,0]
+    return X_csv[:,0], X_csv[:,1], X_csv[:,2], Y_csv[:,0]
 
 #FUNCIÓN DE NORMALIZACIÓN
 def normalizar(X1,X2,X3,Y, extremos):
@@ -195,15 +199,30 @@ def graficar_caracteristicas(X1, X2, X3):
     
 
 def main():     
+    #ARGUMENTOS CLI
+    parser = argparse.ArgumentParser(description="Regresion de Ridge :)")
+    parser.add_argument("-g", "--graficas", action="store_true", help="Desplegar Gráficos")
+    parser.add_argument("-p", "--predecir", nargs=3, type=float, metavar=('X1', 'X2', 'X3'), help="Fase de predicción")
+    parser.add_argument("-c", "--clasificar", nargs=1, type=float, metavar=('Y'), help="Fase de clasificación")
+    args = parser.parse_args()
+    
     #PARÁMETROS
-    lr = 0.09
+    lr = 0.3
     T = 1e-6
-    epsilon = 1e-9
-    epocas_max = 20000
+    epsilon = 1e-12
+    epocas_max = 100000
+    
+    #CARACTERISTICAS
+    x1 = 'Reactor Temperature'
+    x2 = 'Ratio of H2 to n-Heptane'
+    x3 = 'Contact Time'
+    
+    #ETIQUETAS
+    y = 'Conversion of n-Heptane to Acetylene'
     
     #CARACTERÍSTICAS Y ETIQUETA
-    caracteristicas = ['Reactor Temperature', 'Ratio of H2 to n-Heptane', 'Contact Time']
-    etiquetas = ['Conversion of n-Heptane to Acetylene']
+    caracteristicas = [x1, x2, x3]
+    etiquetas = [y]
     #LECTURA CSV
     X1,X2,X3,Y = leer_csv('dataset_acetileno.csv', caracteristicas, etiquetas)
     
@@ -231,14 +250,32 @@ def main():
     #GRÁFICA DE CONVERGENCIA DE J
     #graficar_convergencia(X1, Y, b0, b1, historial_costos)
     
-    #PREDICCION
-    print(f"Costo=x1*{b1} + x2*{b2} + x3*{b3} + {b0}")
+    #MODELO
+    print("-"*50)
+    print(f"Modelo: Y = {b0:.4f} + ({b1:.4f})*X1 + ({b2:.4f})*X2 + ({b3:.4f})*X3")
+    print("-"*50)
     
-    #GRAFICAR PLANOS
-    graficar_plano(X1,X2,X3,Y,b0,b1,b2,b3,var1_name='Reactor Temperature',var2_name='Ratio of H2 to n-Heptane')
-    graficar_plano(X1,X2,X3,Y,b0,b1,b2,b3,var1_name='Reactor Temperature',var2_name='Contact Time')
-    graficar_plano(X1,X2,X3,Y,b0,b1,b2,b3,var1_name='Ratio of H2 to n-Heptane',var2_name='Contact Time')
-    graficar_caracteristicas(X1,X2,X3)
+    #DECISIÓN SEGUN ARGUMENTOS CLI
+    if args.graficas:
+        #GRAFICAR PLANOS
+        graficar_plano(X1,X2,X3,Y,b0,b1,b2,b3,var1_name=x1,var2_name=x2)
+        graficar_plano(X1,X2,X3,Y,b0,b1,b2,b3,var1_name=x1,var2_name=x3)
+        graficar_plano(X1,X2,X3,Y,b0,b1,b2,b3,var1_name=x2,var2_name=x3)
+        graficar_caracteristicas(X1,X2,X3)
+    
+    if args.predecir:
+        val_x1, val_x2, val_x3 = args.predecir
+        prediccion = b0 + b1*val_x1 + b2*val_x2 + b3*val_x3
+        print(f"Entradas -> Temp: {val_x1}, Ratio: {val_x2}, Time: {val_x3}")
+        print(f"Prediccion (Ym): {prediccion:.4f}")
+        
+    if args.clasificar:
+        print("Ya es toda,gue")
+    
+    if not(args.predecir or args.clasificar or args.graficas):
+        print("No se recibio bandera de acción :(")
+        print("Use 'python3 ridge.py -h' para ver las opciones disponibles")
+
 
 if __name__ == "__main__":
     main()
