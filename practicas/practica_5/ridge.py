@@ -203,7 +203,7 @@ def main():
     parser = argparse.ArgumentParser(description="Regresion de Ridge :)")
     parser.add_argument("-g", "--graficas", action="store_true", help="Desplegar Gráficos")
     parser.add_argument("-p", "--predecir", nargs=3, type=float, metavar=('X1', 'X2', 'X3'), help="Fase de predicción")
-    parser.add_argument("-c", "--clasificar", nargs=1, type=float, metavar=('Y'), help="Fase de clasificación")
+    parser.add_argument("-c", "--clasificar", nargs=4, type=float, metavar=('X1', 'X2', 'X3', 'Y'), help="Fase de clasificación")
     args = parser.parse_args()
     
     #PARÁMETROS
@@ -264,13 +264,43 @@ def main():
         graficar_caracteristicas(X1,X2,X3)
     
     if args.predecir:
-        val_x1, val_x2, val_x3 = args.predecir
-        prediccion = b0 + b1*val_x1 + b2*val_x2 + b3*val_x3
-        print(f"Entradas -> Temp: {val_x1}, Ratio: {val_x2}, Time: {val_x3}")
-        print(f"Prediccion (Ym): {prediccion:.4f}")
+        x1_test, x2_test, x3_test = args.predecir
+        Ym = b0 + b1*x1_test + b2*x2_test + b3*x3_test
+        
+        rint("-"*50)
+        print("RESULTADOS DE LA PREDICCIÓN DE MUESTRAS")
+        print("-"*50)
+        print(f"Condiciones:  Temp = {x1_test}, Ratio = {x2_test}, Time = {x3_test}")
+        print(f"Prediccion (Ym): {Ym:.4f}")
         
     if args.clasificar:
-        print("Ya es toda,gue")
+        x1_muestra, x2_muestra, x3_muestra, y_muestra = args.clasificar
+        Ym = b0 + b1*x1_muestra + b2*x2_muestra + b3*x3_muestra
+        diferencia = y_muestra - Ym
+        
+        print("-"*50)
+        print("RESULTADOS DE LA CLASIFICACIÓN DE MUESTRAS")
+        print("-"*50)
+        print(f"Condiciones:  Temp = {x1_muestra}, Ratio = {x2_muestra}, Time = {x3_muestra}")
+        print(f"Conversión real (Y_prueba): {y_muestra:.4f}")
+        print(f"Conversión esperada (Ym): {Ym:.4f}")
+        print("-"*50)
+        
+        intervalo_confianza = 0.5 #SIMPLE MARGEN DE ERROR, NO SE CALCULARON INTERVALOS DE CONFIANZA PARA LA REGRESIÓN
+        
+        if abs(diferencia) <= intervalo_confianza:
+            print("Estado: NORMAL")
+            print("Interpretación: El porcentaje de conversión se comporta de acuerdo al modelo lineal")
+            
+        elif diferencia > intervalo_confianza:
+            print("Estado: SUPERIOR")
+            print("Interpretación: El porcentaje de conversión es más alto de lo que predice el modelo lineal")
+            print("Posibles causas: Temperatura del reactor muy alta, tiempo de contacto bajo, ratio de conversión de H2 a n-heptano muy alto")
+            
+        else:
+            print("Estado: INFERIOR")
+            print("Interpretación: El porcentaje de conversión es más bajo de lo que predice el modelo lineal")
+            print("Posibles causas: Temperatura del reactor baja, tiempo de contacto muy alto, ratio de conversión de H2 a n-heptano mínimo")
     
     if not(args.predecir or args.clasificar or args.graficas):
         print("No se recibio bandera de acción :(")
