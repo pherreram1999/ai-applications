@@ -1,4 +1,5 @@
 import random
+from tokenize import String
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -8,12 +9,21 @@ from constants import MAZE_COLORS, TRANSITABLE, AGUA, LODO, ANIMATION_DELAY, STA
     CONSIDERADOS_COLOR, CAMINO_COLOR
 from laberinto import mapa
 from nodo import Nodo
-from tracer import trace
+from tracer import trace, Metrics
 from a_estrella import a_estrella
+from dijkstra import dijkstra
 
-
-def render_map(fig,mapa, colors,camino,considerados,punto_inicial,meta):
-    fig.set_title('A*')
+def render_map(
+        fig,
+        mapa,
+        colors,
+        camino,
+        considerados,
+        punto_inicial,
+        meta,
+        title,
+        metricas: Metrics):
+    fig.set_title(title + f' - {metricas}' )
 
     fig.imshow(mapa, cmap=colors)
 
@@ -65,19 +75,36 @@ def run_a_estrella(fig,colors,nodo_inicial,meta):
     if nodo_encontrado:
         camino = nodo_encontrado.construir_camino()
 
-    render_map(fig,mapa,colors,camino,considerados,nodo_inicial,meta)
+    render_map(fig,mapa,colors,camino,considerados,nodo_inicial,meta,'A*',metricas)
+
+def run_dijkstra(fig,colors,nodo_inicial,meta):
+    metricas, res = trace(
+        dijkstra,
+        mapa,
+        nodo_inicial,
+        meta
+    )
+
+    nodo_encontrado, considerados = res
+
+    camino = None
+
+    if nodo_encontrado:
+        camino = nodo_encontrado.construir_camino()
+
+    render_map(fig,mapa,colors,camino,considerados,nodo_inicial,meta,'dijkstra',metricas)
 
 
 
 if __name__ == "__main__":
     cmap_colors = mcolors.ListedColormap(MAZE_COLORS)
 
-    main_fig, (f1) = plt.subplots(1,1,figsize=(8,8))
-
+    main_fig, (f1,f2) = plt.subplots(1,2,figsize=(12,12))
     inicio = get_random_point(mapa)
     meta = get_random_point(mapa)
 
     run_a_estrella(f1,cmap_colors,inicio,meta)
+    run_dijkstra(f2,cmap_colors,inicio,meta)
 
     plt.show()
 

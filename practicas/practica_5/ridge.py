@@ -267,7 +267,7 @@ def main():
         x1_test, x2_test, x3_test = args.predecir
         Ym = b0 + b1*x1_test + b2*x2_test + b3*x3_test
         
-        rint("-"*50)
+        print("-"*50)
         print("RESULTADOS DE LA PREDICCIÓN DE MUESTRAS")
         print("-"*50)
         print(f"Condiciones:  Temp = {x1_test}, Ratio = {x2_test}, Time = {x3_test}")

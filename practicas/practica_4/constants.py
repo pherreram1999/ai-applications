@@ -12,7 +12,7 @@ COSTOS = { # vertical y horizontal
 # para los colores 0: blanco, 1: negro, 2: cafe: 3: azul
 MAZE_COLORS = ['white','black','brown','blue']
 
-ANIMATION_DELAY = 0.0001
+ANIMATION_DELAY = 0.0000000000000000000000000000000001
 
 START_COLOR = 'orange'
 META_COLOR='green'

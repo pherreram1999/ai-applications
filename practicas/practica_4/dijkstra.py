@@ -4,19 +4,17 @@ from nodo import Nodo
 from constants import NO_TRANSITABLE, TRANSITABLE, COSTOS,AGUA,LODO
 import numpy as np
 
-movimientos_estrella = [(1,-1),(-1,-1),(-1,0),(1,0),(0,1),(1,1),(-1,1),(0,-1)]
+movimientos = [(1,-1),(-1,-1),(-1,0),(1,0),(0,1),(1,1),(-1,1),(0,-1)]
 
-def heuristica(nodo: Nodo ,meta: Nodo):
+
+def dijkstra(mapa ,punto_inicial: Nodo, meta: Nodo) -> tuple[Nodo ,list[Nodo]]:
     """
-    Aplica el calculo de la heuristica de estrella usando Chebyshev L∞
-    :param nodo:
+    En terminos practicos es igual a a_estrella sin calculo de heuristicas
+    :param mapa:
+    :param punto_inicial:
     :param meta:
     :return:
     """
-    return max(abs(meta.x - nodo.x), abs(meta.y - nodo.y))
-
-def a_estrella(mapa ,punto_inicial: Nodo, meta: Nodo) -> tuple[Nodo ,list[Nodo]]:
-
     if mapa[punto_inicial.x ,punto_inicial.y] == NO_TRANSITABLE:
         raise Exception('punto inicial no transitable')
 
@@ -28,7 +26,8 @@ def a_estrella(mapa ,punto_inicial: Nodo, meta: Nodo) -> tuple[Nodo ,list[Nodo]]
             x=punto_inicial.x,
             y=punto_inicial.y,
             g=0,
-            f=heuristica(punto_inicial ,meta)
+            # dijstra no realiza el calculo de heuristicas
+            # f=heuristica(punto_inicial ,meta)
         )
     ]
 
@@ -60,7 +59,7 @@ def a_estrella(mapa ,punto_inicial: Nodo, meta: Nodo) -> tuple[Nodo ,list[Nodo]]
 
         # verificamos los vecimos en base a los movimientos
 
-        for vx ,vy in movimientos_estrella:
+        for vx ,vy in movimientos:
             vecino = Nodo(x=nodo_actual.x + vx ,y=nodo_actual.y + vy)
             # corroboramos si el vecino esta entre dentro de mapa y este sea valido
             if (0 <= vecino.x < filas  # que sea dentro de las filas
@@ -78,9 +77,10 @@ def a_estrella(mapa ,punto_inicial: Nodo, meta: Nodo) -> tuple[Nodo ,list[Nodo]]
                 elif abs(vx) == 1 and vy == 0: # se mueve a la derecha o izqueda (horizontal)
                     vecino.g = nodo_actual.g + cx
                 elif abs(vy) == 1 and vx == 0: # se mueve arriba a obajo (vertical)
-                    vecino.g = nodo_actual.g + cy # (movio una fila arriba o abajo
+                    vecino.g = nodo_actual.g + cy
 
-                vecino.f = vecino.g + heuristica(vecino ,meta)
+                # se omite el costo de la herustica
+                vecino.f = vecino.g # + heuristica(vecino ,meta)
 
                 # validamos si este vencino esta en lista abierta para
                 # si no esta, se agrega
