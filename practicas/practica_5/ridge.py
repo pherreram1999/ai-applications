@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 import plotly.graph_objects as go
 import plotly.express as px
 import numpy as np
@@ -22,7 +23,7 @@ def leer_csv(nombre, caracteristicas, etiquetas):
         print(f".:Columna {e} no encontrada:.")
         sys.exit()
 
-    return X_csv[0:119,0], X_csv[0:119,1], X_csv[0:119,2], Y_csv[0:119,0]   #El 80% de las muestras se usa para entrenar el modelo
+    return X_csv[0:120,0], X_csv[0:120,1], X_csv[0:120,2], Y_csv[0:120,0]   #El 80% de las muestras se usa para entrenar el modelo
 
 #FUNCIÓN DE NORMALIZACIÓN
 def normalizar(X1,X2,X3,Y, extremos):
