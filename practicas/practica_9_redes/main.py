@@ -1,9 +1,7 @@
 import numpy as np
-from openpyxl.styles.builtins import title
-
 from patterns import *
 import matplotlib.pyplot as plt
-
+import argparse
 
 # lista de nuestros patrones
 patrones_base = [
@@ -187,16 +185,15 @@ def predecir(x, W, B):
     return activacion  # Devuelve el vector de 6 salidas
 
 
-def main():
+def entrenar_modelo():
     # para entrenar y pueda clasificar, vamos a generar ademas de los perfectos,
     # agregar con ruido para que logre inferir
 
     X = []
     Yd = []
 
-
     for p in range(len(patrones_base)):
-        patrones_repetido_con_ruido = generar_patrones_con_ruido(patrones_base[p],NUMERO_COPIAS_POR_MUESTRA)
+        patrones_repetido_con_ruido = generar_patrones_con_ruido(patrones_base[p], NUMERO_COPIAS_POR_MUESTRA)
         X += [patrones_base[p].flatten()]
         Yd += [Yd_base[p]]
         for pr in patrones_repetido_con_ruido:
@@ -204,24 +201,30 @@ def main():
             Yd.append(Yd_base[p])
             pass
 
+    num_caracteristica = len(X[0])  # recuerda que toma el valor de un padron flatten de 30x30 = 900
 
-    num_caracteristica = len(X[0]) # recuerda que toma el valor de un padron flatten de 30x30 = 900
-
-    w,b, ECM = entrenar(X,Yd,num_caracteristica,6,[128],0.1,1000)
-
-    for p in range(len(patrones_base)):
-        prediccion = escalonar(predecir(patrones_base[p].flatten(), w, b))
-        print(Yd_base[p], prediccion, Yd_base[p] == prediccion, sep='\t')
-
-    print("==== sin escalnar ====")
-    for p in range(len(patrones_base)):
-        prediccion = predecir(patrones_base[p].flatten(), w, b)
-        print(Yd_base[p], prediccion, Yd_base[p] == prediccion, sep='\t')
+    W, B, ECM = entrenar(X, Yd, num_caracteristica, 6, [128], 0.1, 1000)
 
     print("ECM: ", ECM[-1])
-    plt.title("ECM")
-    plt.plot(ECM)
-    plt.show()
+
+    # guardamos los pesos en un JSON
+
+    np.savez("model", W=np.array(W, dtype=object), B=np.array(B, dtype=object))
+    pass
+
+
+def main():
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("-e","--entrenar",action="store_true", help="entrenar modelo y guardar los pesos y bias")
+
+    args = parser.parse_args()
+
+    if args.entrenar:
+        entrenar_modelo()
+
+
+
     pass
 
 
