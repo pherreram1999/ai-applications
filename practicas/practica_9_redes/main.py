@@ -1,5 +1,8 @@
 import numpy as np
+from openpyxl.styles.builtins import title
+
 from patterns import *
+import matplotlib.pyplot as plt
 
 
 # lista de nuestros patrones
@@ -85,7 +88,7 @@ def entrenar(X, Yd, n_in,n_out, n_layers, lr, epoch_max):
 
     epoch = 0
 
-    while ECM > 0.2 and epoch <= epoch_max:
+    while ECM > 0.0 and epoch <= epoch_max:
 
         suma_ecm = 0
 
@@ -158,7 +161,7 @@ def ruido(patron, porcentaje=0.1):
     return r
 
 
-def generar_patrones_con_ruido(patron, no_copias, porcentaje=0.1):
+def generar_patrones_con_ruido(patron, no_copias, porcentaje=0.4):
     copias = []
     for _ in range(no_copias):
         copias.append(ruido(patron, porcentaje))
@@ -204,12 +207,21 @@ def main():
 
     num_caracteristica = len(X[0]) # recuerda que toma el valor de un padron flatten de 30x30 = 900
 
-    w,b, _ = entrenar(X,Yd,num_caracteristica,6,[64, 32, 16],0.05,10_000)
+    w,b, ECM = entrenar(X,Yd,num_caracteristica,6,[128],0.1,1000)
 
     for p in range(len(patrones_base)):
         prediccion = escalonar(predecir(patrones_base[p].flatten(), w, b))
         print(Yd_base[p], prediccion, Yd_base[p] == prediccion, sep='\t')
 
+    print("==== sin escalnar ====")
+    for p in range(len(patrones_base)):
+        prediccion = predecir(patrones_base[p].flatten(), w, b)
+        print(Yd_base[p], prediccion, Yd_base[p] == prediccion, sep='\t')
+
+    print("ECM: ", ECM[-1])
+    plt.title("ECM")
+    plt.plot(ECM)
+    plt.show()
     pass
 
 
