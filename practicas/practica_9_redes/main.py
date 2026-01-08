@@ -1,10 +1,9 @@
-import matplotlib.pyplot as plt
-from matplotlib.pyplot import title
-
 from patterns import *
 import numpy as np
 import argparse
 import os
+import tkinter as tk
+from tkinter import messagebox
 
 # lista de nuestros patrones
 patrones_base = [
@@ -208,6 +207,21 @@ def escalonar(Z):
     return activacion
 
 
+def dibujar_patrones_base():
+    # creamos otra figura para poder comparar
+    plt.figure(figsize=(4, 7), num="Patrones Base")
+
+    i = 1
+    for nombre_patron, patron in mapa_patrones.items():
+        plt.subplot(len(patrones_base), 1, i)
+        plt.imshow(patron, cmap="gray")
+        plt.title(f"{nombre_patron}: {Yd_base[i - 1]}")
+        plt.axis("off")
+        i = i + 1
+        pass
+    plt.tight_layout()  # quita espacios en blanco
+
+
 def predecir(x, W, B):
     activacion = x
     for i in range(len(W)):
@@ -250,20 +264,7 @@ def test_model():
     plt.tight_layout() # quita espacios en blanco
 
 
-    # creamos otra figura para poder comparar
-    plt.figure(figsize=(4, 7), num="Patrones Base")
-
-    i = 1
-    for nombre_patron, patron in mapa_patrones.items():
-        plt.subplot(len(patrones_base), 1, i)
-        plt.imshow(patron, cmap="gray")
-        plt.title(f"{nombre_patron}: {Yd_base[i-1]}")
-        plt.axis("off")
-        i = i + 1
-        pass
-    plt.tight_layout()  # quita espacios en blanco
-
-
+    dibujar_patrones_base()
 
     plt.show()
 
@@ -311,12 +312,91 @@ def entrenar_modelo():
     print("El calculo de W y B se guardo en disco: models.npz")
     pass
 
+# para el grid
+
+
+class GridDraw:
+    def __init__(self, filas=30, columnas=30, tamaño_celda=20):
+        self.filas = filas
+        self.columnas = columnas
+        self.tamaño_celda = tamaño_celda
+
+        # Inicializamos la matriz con ceros (bitmap)
+        self.matriz = np.zeros((filas, columnas), dtype=int)
+
+        self.root = tk.Tk()
+        self.root.title("Dibujador de Patrones 30x30")
+
+        # Crear el lienzo (Canvas)
+        self.canvas = tk.Canvas(
+            self.root,
+            width=columnas * tamaño_celda,
+            height=filas * tamaño_celda,
+            bg="white"
+        )
+        self.canvas.pack()
+
+        # Dibujar las líneas de la grilla
+        for i in range(filas + 1):
+            self.canvas.create_line(0, i * tamaño_celda, columnas * tamaño_celda, i * tamaño_celda, fill="lightgray")
+        for j in range(columnas + 1):
+            self.canvas.create_line(j * tamaño_celda, 0, j * tamaño_celda, filas * tamaño_celda, fill="lightgray")
+
+        # Eventos del mouse
+        self.canvas.bind("<B1-Motion>", self.pintar)  # Arrastrar clic izquierdo
+        self.canvas.bind("<Button-1>", self.pintar)  # Clic izquierdo único
+
+        # Botones de control
+        btn_frame = tk.Frame(self.root)
+        btn_frame.pack(fill="x")
+
+        tk.Button(btn_frame, text="Limpiar", command=self.limpiar).pack(side="left", padx=10, pady=5)
+        tk.Button(btn_frame, text="Clasificar", command=self.obtener_matriz).pack(side="right", padx=10, pady=5)
+
+    def pintar(self, event):
+        # Calcular en qué celda se hizo clic
+        col = event.x // self.tamaño_celda
+        fila = event.y // self.tamaño_celda
+
+        if 0 <= fila < self.filas and 0 <= col < self.columnas:
+            # Actualizar matriz
+            self.matriz[fila, col] = 1
+            # Pintar el cuadrado en el canvas
+            x1 = col * self.tamaño_celda
+            y1 = fila * self.tamaño_celda
+            x2 = x1 + self.tamaño_celda
+            y2 = y1 + self.tamaño_celda
+            self.canvas.create_rectangle(x1, y1, x2, y2, fill="black", outline="gray")
+
+    def limpiar(self):
+        self.matriz.fill(0)
+        self.canvas.delete("all")
+        # Redibujar grilla
+        for i in range(self.filas + 1):
+            self.canvas.create_line(0, i * self.tamaño_celda, self.columnas * self.tamaño_celda, i * self.tamaño_celda,
+                                    fill="lightgray")
+        for j in range(self.columnas + 1):
+            self.canvas.create_line(j * self.tamaño_celda, 0, j * self.tamaño_celda, self.filas * self.tamaño_celda,
+                                    fill="lightgray")
+
+    def obtener_matriz(self):
+        # clasificamos la matriz
+        x = self.matriz.flatten()
+        W, B = loadModelFromDisk()
+        Yobt = escalonar(predecir(x,W,B))
+        print(Yobt)
+
+    def run(self):
+        self.root.mainloop()
+
+
 
 def main():
     parser = argparse.ArgumentParser()
 
     parser.add_argument("-e","--entrenar",action="store_true", help="entrenar modelo y guardar los pesos y bias")
     parser.add_argument("-t","--test",action="store_true", help="probar el modelo")
+    parser.add_argument("-d","--dibujar",action="store_true", help="dibujar")
 
     args = parser.parse_args()
 
@@ -326,6 +406,11 @@ def main():
     elif args.test:
         print("==== Probando modelo ====")
         return test_model()
+    elif args.dibujar:
+        grid = GridDraw()
+        return grid.run()
+
+
 
 
 
