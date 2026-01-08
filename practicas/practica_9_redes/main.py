@@ -1,7 +1,10 @@
-import numpy as np
-from patterns import *
 import matplotlib.pyplot as plt
+from matplotlib.pyplot import title
+
+from patterns import *
+import numpy as np
 import argparse
+import os
 
 # lista de nuestros patrones
 patrones_base = [
@@ -13,7 +16,18 @@ patrones_base = [
     patron_triangulo
 ]
 
+mapa_patrones = {
+    "cruz": patron_cruz,
+    "cuadrado": patron_cuadrado,
+    "rombo": patron_rombo,
+    "estrella": patron_estrella,
+    "circulo": patron_circulo,
+    "triangulo": patron_triangulo
+}
+
 NUMERO_COPIAS_POR_MUESTRA = 10
+
+NUMERO_COPIAS_TEST_POR_MUESTRA = 3
 
 Yd_cruz = [1, 0, 0, 0, 0, 0]
 Yd_cuadrado = [0, 1, 0, 0, 0, 0]
@@ -39,6 +53,26 @@ def d_sigmoide_z(z):
     s = sigmoide(z)
     return s*(1-s)
 
+
+def loadModelFromDisk():
+    """
+    Carga los pesos y las Bias de modelo guardados en disco (W, B)
+    :return:
+    """
+    if not os.path.exists("model.npz"):
+        raise Exception("model.npz no encontrado")
+    with np.load("model.npz", allow_pickle=True) as data:
+        W = data['W']
+        B = data['B']
+        return W, B
+
+
+
+def esPrediccionValidaYd(Yobt):
+    for Yd in Yd_base:
+        if Yd == Yobt:
+            return True
+    return False
 
 def entrenar(X, Yd, n_in,n_out, n_layers, lr, epoch_max):
     """
@@ -185,6 +219,55 @@ def predecir(x, W, B):
     return activacion  # Devuelve el vector de 6 salidas
 
 
+def test_model():
+    W, B = loadModelFromDisk()
+    # creamos 3 por cada patron con ruido para comprobar el modelo
+    i = 1
+    plt.figure(figsize=(10, 8),num="Patrones con Ruido")
+
+    numero_muestras = len(patrones_base)
+    # Definimos el número de columnas para mayor claridad
+    columnas = NUMERO_COPIAS_TEST_POR_MUESTRA + 1
+
+
+
+    for nombre_patron, patron in mapa_patrones.items():
+        patrones_con_ruido = generar_patrones_con_ruido(patron, NUMERO_COPIAS_TEST_POR_MUESTRA, .10)
+        for patron_con_ruido in patrones_con_ruido:
+            plt.subplot(numero_muestras, columnas, i)
+            plt.imshow(patron_con_ruido, cmap="gray")
+            plt.axis('off')
+
+            x = patron_con_ruido.flatten()
+            Yobt = escalonar(predecir(x, W, B))
+
+            plt.title(f"Prediccion: \n {Yobt}", color='green', fontsize=8, pad=2)
+
+
+            i = i + 1
+            pass
+        pass
+    plt.tight_layout() # quita espacios en blanco
+
+
+    # creamos otra figura para poder comparar
+    plt.figure(figsize=(4, 7), num="Patrones Base")
+
+    i = 1
+    for nombre_patron, patron in mapa_patrones.items():
+        plt.subplot(len(patrones_base), 1, i)
+        plt.imshow(patron, cmap="gray")
+        plt.title(f"{nombre_patron}: {Yd_base[i-1]}")
+        plt.axis("off")
+        i = i + 1
+        pass
+    plt.tight_layout()  # quita espacios en blanco
+
+
+
+    plt.show()
+
+
 def entrenar_modelo():
     # para entrenar y pueda clasificar, vamos a generar ademas de los perfectos,
     # agregar con ruido para que logre inferir
@@ -205,11 +288,27 @@ def entrenar_modelo():
 
     W, B, ECM = entrenar(X, Yd, num_caracteristica, 6, [128], 0.1, 1000)
 
-    print("ECM: ", ECM[-1])
+    print("ECM: " + str(ECM[-1]))
 
-    # guardamos los pesos en un JSON
 
+    # validamos si nuestor modeo predice los patrones con los que se entreno
+
+    validados = 0
+
+    for p in range(len(patrones_base)):
+        x = patrones_base[p].flatten()
+        Yobt = escalonar(predecir(x,W,B))
+        print(Yobt,Yd_base[p])
+        if Yobt == Yd_base[p]:
+            validados += 1
+
+    if validados != len(patrones_base):
+        print("El modelo no logro predecir todos los patrones base !!!")
+        return
+
+    # guardamos los modelos en disco
     np.savez("model", W=np.array(W, dtype=object), B=np.array(B, dtype=object))
+    print("El calculo de W y B se guardo en disco: models.npz")
     pass
 
 
@@ -217,11 +316,16 @@ def main():
     parser = argparse.ArgumentParser()
 
     parser.add_argument("-e","--entrenar",action="store_true", help="entrenar modelo y guardar los pesos y bias")
+    parser.add_argument("-t","--test",action="store_true", help="probar el modelo")
 
     args = parser.parse_args()
 
     if args.entrenar:
-        entrenar_modelo()
+        print("==== Entrenando modelo ====")
+        return entrenar_modelo()
+    elif args.test:
+        print("==== Probando modelo ====")
+        return test_model()
 
 
 
