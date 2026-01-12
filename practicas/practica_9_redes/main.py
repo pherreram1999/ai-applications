@@ -3,6 +3,7 @@ import numpy as np
 import argparse
 import os
 import tkinter as tk
+import pandas as pd
 from tkinter import messagebox
 
 # lista de nuestros patrones
@@ -45,6 +46,20 @@ Yd_base = [
 ]
 
 
+# para las flores
+
+Ydf_iris_sectosa = [1,0,0]
+Ydf_iris_versicolor = [0,1,0]
+Ydf_iris_virginica = [0,0,1]
+
+
+Yd_flores = [
+    Ydf_iris_sectosa,
+    Ydf_iris_versicolor,
+    Ydf_iris_virginica,
+]
+
+
 def sigmoide(z):
     return 1/(1+np.exp(-z))
 
@@ -64,8 +79,6 @@ def loadModelFromDisk():
         W = data['W']
         B = data['B']
         return W, B
-
-
 
 def esPrediccionValidaYd(Yobt):
     for Yd in Yd_base:
@@ -129,7 +142,7 @@ def entrenar(X, Yd, n_in,n_out, n_layers, lr, epoch_max):
 
             # guardamos los valores de activacion, lo devuelto por nuestra funcion
             # de activacion, en caso del primer indice son valores de entrada
-            A = [X[p]]
+            A = [X[p]] #primer entrada como valores de activacion
             # guardamos los valores antes de activar que se usaran para la derivada
             Z = []
 
@@ -178,8 +191,6 @@ def entrenar(X, Yd, n_in,n_out, n_layers, lr, epoch_max):
 
     return W,B, ECM_historico
 
-
-
 def ruido(patron, porcentaje=0.1):
     r = patron.copy()
     filas, columnas = r.shape
@@ -190,7 +201,6 @@ def ruido(patron, porcentaje=0.1):
         j = np.random.randint(0, columnas)
         r[i, j] = 1 - r[i, j]
     return r
-
 
 def generar_patrones_con_ruido(patron, no_copias, porcentaje=0.4):
     copias = []
@@ -206,7 +216,6 @@ def escalonar(Z):
         )
     return activacion
 
-
 def dibujar_patrones_base():
     # creamos otra figura para poder comparar
     plt.figure(figsize=(4, 7), num="Patrones Base")
@@ -221,7 +230,6 @@ def dibujar_patrones_base():
         pass
     plt.tight_layout()  # quita espacios en blanco
 
-
 def predecir(x, W, B):
     activacion = x
     for i in range(len(W)):
@@ -231,7 +239,6 @@ def predecir(x, W, B):
         activacion = sigmoide(z)
 
     return activacion  # Devuelve el vector de 6 salidas
-
 
 def test_model():
     W, B = loadModelFromDisk()
@@ -268,6 +275,11 @@ def test_model():
 
     plt.show()
 
+
+def guardar_modelo(nombre_modelo,W,B):
+    # guardamos los modelos en disco
+    np.savez(nombre_modelo, W=np.array(W, dtype=object), B=np.array(B, dtype=object))
+    print("El calculo de W y B se guardo en disco: " + nombre_modelo + " !!!")
 
 def entrenar_modelo():
     # para entrenar y pueda clasificar, vamos a generar ademas de los perfectos,
@@ -306,15 +318,81 @@ def entrenar_modelo():
     if validados != len(patrones_base):
         print("El modelo no logro predecir todos los patrones base !!!")
         return
-
-    # guardamos los modelos en disco
-    np.savez("model", W=np.array(W, dtype=object), B=np.array(B, dtype=object))
-    print("El calculo de W y B se guardo en disco: models.npz")
     pass
 
+
+def normalizar_z_score(X):
+    """
+    Normaliza una matriz de datos usando Z-Score (estandarización).
+    :param X: Matriz de datos (muestras, caracteristicas) como np.array
+    :return: Matriz normalizada
+    """
+    # Convertir a array de numpy por si se recibe una lista de listas
+    X = np.array(X)
+
+    # Calcular la media por cada columna (axis=0)
+    media = np.mean(X, axis=0)
+
+    # Calcular la desviación estándar por cada columna (axis=0)
+    desviacion = np.std(X, axis=0)
+
+    # Evitar división por cero en caso de que una característica sea constante
+    desviacion[desviacion == 0] = 1.0
+
+    # Aplicar la fórmula: (X - media) / desviacion
+    X_norm = (X - media) / desviacion
+
+    return X_norm,media,desviacion
+
+
+import numpy as np
+
+
+def desnormalizar(W, B, media, desviacion):
+    """
+    Ajusta los pesos y bias de la primera capa para aceptar datos sin normalizar.
+    :param W: Lista de matrices de pesos (W[0] es la entrada)
+    :param B: Lista de vectores de bias (B[0] es la entrada)
+    :param media: Vector de medias usado en Z-score
+    :param desviacion: Vector de desviaciones usado en Z-score
+    :return: Copias de W y B ajustadas
+    """
+    # Creamos copias para no modificar los originales
+    W_real = [w.copy() for w in W]
+    B_real = [b.copy() for b in B]
+
+    # Ajustamos solo la PRIMERA capa (índice 0)
+    # W_real[0] tiene forma (caracteristicas, neuronas_ocultas)
+    # media y desviacion tienen forma (caracteristicas,)
+
+    # 1. Ajustar Pesos: W / sigma (columna por columna)
+    for i in range(W_real[0].shape[1]):  # Por cada neurona oculta
+        W_real[0][:, i] = W_real[0][:, i] / desviacion
+
+    # 2. Ajustar Bias: B - sum(mu * W / sigma)
+    # Calculamos el ajuste restando el producto punto de la media con los nuevos pesos
+    ajuste_bias = np.dot(media, W_real[0])
+    B_real[0] = B_real[0] - ajuste_bias
+
+    return W_real, B_real
+
+def entrenar_modelo_flores():
+    df = pd.read_csv("IRIS.csv")
+    X = df.iloc[:, 0:4].to_numpy()
+    X_estadarizado, media, desviacion = normalizar_z_score(X)
+
+    # sacamos un Yd real de las especies de los cada flor,
+    # reucerda que es Yd por cada valor
+    columna_especie = df.columns[-1]  # Toma la última columna
+    Yd_completo = pd.get_dummies(df[columna_especie]).values
+
+    W_norm, B_norm, ECM = entrenar(X_estadarizado,Yd_completo,4,3,[128],0.1,1000)
+    W, B = desnormalizar(W_norm,B_norm,media,desviacion)
+    guardar_modelo("flowers_model.npz",W,B)
+
+
+
 # para el grid
-
-
 class GridDraw:
     def __init__(self, filas=30, columnas=30, tamaño_celda=20):
         self.filas = filas
@@ -390,13 +468,13 @@ class GridDraw:
         self.root.mainloop()
 
 
-
 def main():
     parser = argparse.ArgumentParser()
 
     parser.add_argument("-e","--entrenar",action="store_true", help="entrenar modelo y guardar los pesos y bias")
     parser.add_argument("-t","--test",action="store_true", help="probar el modelo")
     parser.add_argument("-d","--dibujar",action="store_true", help="dibujar")
+    parser.add_argument("-ef","--entrenar_flores",action="store_true", help="entrenar modelo con flores")
 
     args = parser.parse_args()
 
@@ -409,13 +487,15 @@ def main():
     elif args.dibujar:
         grid = GridDraw()
         return grid.run()
+    elif args.entrenar_flores:
+        entrenar_modelo_flores()
+        return
 
 
 
 
 
     pass
-
 
 if __name__ == '__main__':
     main()
