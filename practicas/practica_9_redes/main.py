@@ -384,7 +384,15 @@ def entrenar_modelo_flores():
     # sacamos un Yd real de las especies de los cada flor,
     # reucerda que es Yd por cada valor
     columna_especie = df.columns[-1]  # Toma la última columna
-    Yd_completo = pd.get_dummies(df[columna_especie]).values
+
+    # Mapeo manual de especies a vectores Ydf
+    mapeo_especies = {
+        'Iris-setosa': Ydf_iris_sectosa,
+        'Iris-versicolor': Ydf_iris_versicolor,
+        'Iris-virginica': Ydf_iris_virginica
+    }
+
+    Yd_completo = np.array([mapeo_especies[especie] for especie in df[columna_especie]])
 
     W_norm, B_norm, ECM = entrenar(X_estadarizado,Yd_completo,4,3,[128],0.1,1000)
     W, B = desnormalizar(W_norm,B_norm,media,desviacion)
