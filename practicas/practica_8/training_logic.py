@@ -184,6 +184,105 @@ def entrenar_sin_backprop(X, Yd, n_in,n_out, n_layers, lr, epoch_max):
     return W,B, ECM_historico
 
 
+def entrenar_sin_backprop_capa_oculta_aleatoria(X, Yd, n_in,n_out, n_layers, lr, epoch_max):
+    
+    dimensiones = [n_in] + n_layers + [n_out]
+    numero_dimensiones = len(dimensiones)
+    numero_capas = len(dimensiones)
+    W = [] 
+    B = [] 
+
+    for i in range(numero_dimensiones - 1):
+        W.append(np.random.randn(dimensiones[i], dimensiones[i + 1]) * 0.05)
+        B.append(np.random.randn(dimensiones[i + 1]) * 0.5)
+
+    ECM = 10 
+    ECM_historico = []
+    epoch = 0
+
+    while ECM > 0.001 and epoch <= epoch_max:
+        suma_ecm = 0
+        for p in range(len(X)): 
+            # === FORWARD PROPAGATION ===
+            A = [X[p]]
+            Z = []
+
+            for i in range(len(W)):
+                z_actual = np.dot(A[i], W[i]) + B[i]
+                Z.append(z_actual)
+                A.append(sigmoide(z_actual))
+
+            Y_obt = A[-1]
+
+            error = Yd[p] - Y_obt
+            suma_ecm += np.sum(error**2)
+            
+            
+            #ELM
+            delta_salida = error * d_sigmoide_z(Z[-1])  #DELTA SOLO PARA LA CAPA DE SALIDA
+            W[-1] += lr * np.outer(A[-2], delta_salida) #CONECTAMOS ULTIMA CAPA OCULTA CON LA SALIDA
+            B[-1] += lr * delta_salida
+            
+            #NO HACEMOS NADA EN CAPA OCULTA
+
+        ECM = 0.5 * (suma_ecm / len(X))
+        ECM_historico.append(ECM)
+        epoch += 1
+
+    return W,B, ECM_historico
+    
+#MUTACION: SUMA DE RUIDO ALEATORIO A LOS PESOS Y REVISAR SI SUBE O BAJA EL ERROR 
+def entrenar_con_mutacion(X, Yd, n_in, n_out, n_layers, lr, epoch_max):
+    # Inicialización estándar ...
+    dimensiones = [n_in] + n_layers + [n_out]
+    W = []
+    B = []
+    for i in range(len(dimensiones) - 1):
+        W.append(np.random.randn(dimensiones[i], dimensiones[i + 1]) * 0.1)
+        B.append(np.random.randn(dimensiones[i + 1]) * 0.5)
+
+    # Calculamos error inicial
+    ECM = 10 
+    ECM_historico = []
+    mejor_ecm = 1000 
+    
+    for epoch in range(epoch_max):
+        # 1. Guardar copia de seguridad (Backup)
+        W_backup = [w.copy() for w in W]
+        B_backup = [b.copy() for b in B]
+
+        # 2. MUTAR: Aplicar ruido aleatorio a todos los pesos
+        # "lr" aquí actúa como la fuerza de la mutación
+        for i in range(len(W)):
+            W[i] += np.random.randn(*W[i].shape) * lr 
+            B[i] += np.random.randn(*B[i].shape) * lr
+
+        # 3. Calcular Nuevo Error (Forward Pass)
+        suma_ecm = 0
+        for p in range(len(X)):
+            A = [X[p]]
+            for i in range(len(W)):
+                z = np.dot(A[i], W[i]) + B[i]
+                A.append(sigmoide(z))
+            
+            error = Yd[p] - A[-1]
+            suma_ecm += np.sum(error**2)
+        
+        ecm_actual = 0.5 * (suma_ecm / len(X))
+
+        # 4. DECISIÓN (Selección Natural)
+        if ecm_actual < mejor_ecm:
+            mejor_ecm = ecm_actual
+            # Nos quedamos con los cambios (No hacemos nada, ya están aplicados)
+        else:
+            # El cambio fue malo, revertimos al backup
+            W = W_backup
+            B = B_backup
+        ECM_historico.append(mejor_ecm)
+            
+    return W, B, ECM_historico
+
+
     
     
 def normalizar_z_score(X):

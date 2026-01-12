@@ -13,6 +13,8 @@ from constants import (
 from training_logic import (
     entrenar,
     entrenar_sin_backprop,
+    entrenar_sin_backprop_capa_oculta_aleatoria,
+    entrenar_con_mutacion,
     loadModelFromDisk,
     predecir,
     escalonar,
@@ -103,7 +105,12 @@ def entrenar_modelo():
 
     num_caracteristica = len(X[0])  # recuerda que toma el valor de un padron flatten de 30x30 = 900
 
-    W, B, ECM = entrenar_sin_backprop(X, Yd, num_caracteristica, 6, [128], 0.1, 1000)
+    #W, B, ECM = entrenar(X, Yd, num_caracteristica, 6, [128], 0.1, 1000)
+    #W, B, ECM = entrenar_sin_backprop(X, Yd, num_caracteristica, 6, [128], 0.1, 1000)
+    #W, B, ECM = entrenar_sin_backprop_capa_oculta_aleatoria(X, Yd, num_caracteristica, 6, [1000], 0.1, 1000)
+    W, B, ECM = entrenar_con_mutacion(X, Yd, num_caracteristica, 6, [128], 0.1, 1000)
+    
+
 
     print("ECM: " + str(ECM[-1]))
     
